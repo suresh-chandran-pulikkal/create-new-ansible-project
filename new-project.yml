@@ -1,0 +1,32 @@
+---
+- name: Prompt for project name
+  hosts: localhost
+  vars_prompt:
+    - name: project
+      prompt: Name of project ?
+      private: false
+  tasks:
+    - name: Create a project ans_directory and group vars folder
+      ansible.builtin.file:
+        path: '{{ ans_directory }}/{{ project }}/group_vars'
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+    - name: Copy ansible.cfg
+      ansible.builtin.copy:
+        src: '{{ ans_directory }}/ansible.cfg'
+        dest: '{{ ans_directory }}/{{ project }}/ansible.cfg'
+        mode: '0644'
+      delegate_to: localhost
+    - name: Copy sample hosts file
+      ansible.builtin.copy:
+        src: '{{ ans_directory }}/hosts'
+        dest: '{{ ans_directory }}/{{ project }}/hosts'
+        mode: '0644'
+      delegate_to: localhost
+    - name: Copy all.yml file
+      ansible.builtin.copy:
+        src: '{{ ans_directory }}/group_vars/all.yml'
+        dest: '{{ ans_directory }}/{{ project }}/group_vars/all.yml'
+        mode: '0644'
+      delegate_to: localhost
