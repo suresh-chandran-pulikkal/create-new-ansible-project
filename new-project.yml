@@ -1,32 +1,47 @@
 ---
-- name: Prompt for project name
+- name: Bootstrap a new Ansible project structure
   hosts: localhost
+  gather_facts: false
+
   vars_prompt:
-    - name: project
-      prompt: Name of project ?
+    - name: ans_directory
+      prompt: Base directory for projects?
       private: false
+    - name: project
+      prompt: Name of project?
+      private: false
+
   tasks:
-    - name: Create a project ans_directory and group vars folder
-      ansible.builtin.file:
-        path: '{{ ans_directory }}/{{ project }}/group_vars'
+    - name: Set project root
+      set_fact:
+        project_root: "{{ ans_directory }}/{{ project }}"
+
+    - name: Ensure project directory and group_vars exists
+      file:
+        path: "{{ item }}"
         state: directory
         mode: '0755'
-      delegate_to: localhost
-    - name: Copy ansible.cfg
-      ansible.builtin.copy:
-        src: '{{ ans_directory }}/ansible.cfg'
-        dest: '{{ ans_directory }}/{{ project }}/ansible.cfg'
-        mode: '0644'
-      delegate_to: localhost
-    - name: Copy sample hosts file
-      ansible.builtin.copy:
-        src: '{{ ans_directory }}/hosts'
-        dest: '{{ ans_directory }}/{{ project }}/hosts'
-        mode: '0644'
-      delegate_to: localhost
-    - name: Copy all.yml file
-      ansible.builtin.copy:
-        src: '{{ ans_directory }}/group_vars/all.yml'
-        dest: '{{ ans_directory }}/{{ project }}/group_vars/all.yml'
-        mode: '0644'
-      delegate_to: localhost
+      loop:
+        - "{{ project_root }}"
+        - "{{ project_root }}/group_vars"
+
+    - name: Copy default files
+      block:
+        - name: Copy ansible.cfg
+          copy:
+            src: "{{ ans_directory }}/ansible.cfg"
+            dest: "{{ project_root }}/ansible.cfg"
+            mode: '0644'
+
+        - name: Copy hosts file
+          copy:
+            src: "{{ ans_directory }}/hosts"
+            dest: "{{ project_root }}/hosts"
+            mode: '0644'
+
+        - name: Copy group_vars/all.yml
+          copy:
+            src: "{{ ans_directory }}/group_vars/all.yml"
+            dest: "{{ project_root }}/group_vars/all.yml"
+            mode: '0644'
+      when: project_root is defined
